@@ -1,0 +1,121 @@
+package com.hotct.xml;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+
+import com.hotct.model.Chn;
+
+/**
+ * 频道统计消息操作类
+ * 方法parseXML :解析消息
+ * 方法createDocument :生成消息
+ * @author liujh
+ *
+ */
+public class ChnStcMsg
+{
+
+	/**
+	 * 返回结果的数组，共两个值：
+	 * result[0]: 终端ID
+	 * result[1]:频道信息集合 是list
+	 */
+	private Object[] result = new Object[2];
+	
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args)
+	{
+		ChnStcMsg csm = new ChnStcMsg();
+		List<Chn> chns = new ArrayList<Chn>();
+		
+		Chn chn = new Chn();
+		chn.setName("Soprt");
+		chn.setNum("100");
+		chns.add(chn);
+		chn = new Chn();
+		chn.setName("news");
+		chn.setNum("200");
+		chns.add(chn);
+		
+		String ss = csm.createDocument("001001", chns);
+		System.out.println(ss);
+		Object[] rst = csm.parseXML(ss);
+		System.out.println(rst[0]);
+		for(Chn c : (List<Chn>)rst[1])
+		{
+			System.out.println(c.getName());
+			System.out.println(c.getNum());
+		}
+	}
+	
+	/**
+	 * 解析频道统计消息
+	 */
+	public Object[] parseXML(String msg)
+	{
+		Document document = null;
+		try
+		{
+			document = DocumentHelper.parseText(msg);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		Element root = document.getRootElement();
+		String clientId = root.elementText("clientId");
+		
+		List<Chn> chns = new ArrayList<Chn>();
+		
+		Iterator iter = root.elementIterator("chn");
+		while(iter.hasNext())
+		{
+			Chn chn = new Chn();
+			Element c = (Element)iter.next();
+			chn.setName(c.attributeValue("Name"));
+			chn.setNum(c.attributeValue("Num"));
+			chns.add(chn);
+			chn = null;
+		}
+		
+		result[0] = clientId;
+		result[1] = chns;
+		
+		return result;
+	}
+	/**
+	 * 生成频道统计消息
+	 * @param clientId ： 终端id
+	 * @param chns : 终端上所有频道及点击量的抽象对象
+	 * @return 频道统计消息
+	 */
+	@SuppressWarnings("unused")
+	private String createDocument(String clientId , List<Chn> chns)
+	{
+		String message = "";
+		Document document = DocumentHelper.createDocument();
+		Element root = document.addElement("Name");
+		root.addAttribute("msgname", "ChnStc");
+		
+//		Element id = root.addElement("clientId");
+//		id.addText(clientId);
+		
+		for(Chn chn : chns)
+		{
+			Element c = root.addElement("chn");
+			c.addAttribute("Name", chn.getName());
+			c.addAttribute("Num", chn.getNum());
+			c = null;
+		}
+		
+		message = document.asXML();
+		
+		return message;
+	}
+
+}

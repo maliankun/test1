@@ -1,0 +1,89 @@
+package com.hotct.xml;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+
+/**
+ * 注册消息的处理类
+ * 方法parseXML :解析消息
+ * 方法createDocument :生成消息
+ * @author liujh
+ *
+ */
+public class VersionMsg
+{
+
+	/**
+	 * 返回结果数组，共三个值：
+	 * result[0]:终端ID
+	 * result[1]:项目名
+	 * result[2]:项目版本
+	 */
+	private Object[] result = new Object[3];
+	
+	
+	public static void main(String[] args)
+	{
+		VersionMsg rm = new VersionMsg();
+		String ss = rm.createDocument("001001", "ui","10.1.2");
+		System.out.println(ss);
+		Object[] rst = rm.parseXML(ss);
+		System.out.println(rst[0]);
+		System.out.println(rst[1]);
+		System.out.println(rst[2]);
+	}
+	/**
+	 * 解析消息
+	 */
+	public Object[] parseXML(String xml)
+	{
+		Document doc=null;
+		try
+		{
+			doc = DocumentHelper.parseText(xml);
+		} catch (DocumentException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Element root = doc.getRootElement(); 
+		
+		String id = root.elementText("ClientId");
+		String version = root.elementText("Version");
+		String proName = root.elementText("ProName");
+		
+		//设置返回值数组
+		
+		result[0]= id;
+		result[1]= proName;
+		result[2]= version;
+		
+		return result;
+	}
+	/**
+	 * 生成消息
+	 * @param clientId ：终端id
+	 * @param clientIp ：终端ip
+	 * @return 返回注册消息
+	 */
+	public String createDocument(String clientId , String proName ,String version)
+	{
+		String message = "";
+		Document document = DocumentHelper.createDocument();
+		Element root = document.addElement("Name");
+		root.addAttribute("msgname","Version");
+		Element pro = root.addElement("ProName");
+		pro.addText(proName);
+		Element id = root.addElement("ClientId");
+		id.addText(clientId);
+		Element v = root.addElement("Version");
+		v.addText(version);
+		
+		message = document.asXML();
+		
+		return message;
+	}
+}

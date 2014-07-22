@@ -1,0 +1,144 @@
+package com.hotct.xml;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+
+import com.hotct.model.PlayList;
+
+/**
+ * 此类用于处理排期单消息
+ * 方法parseXML :解析消息
+ * 方法createDocument :生成消息
+ * @author liujh
+ *
+ */
+public class PlayListMsg
+{
+	/**
+	 * 此类需要返回的结果数组 共一个值：
+	 * result[0]:排期单对象
+	 */
+	private Object[] result = new Object[1];
+	
+	
+	@SuppressWarnings("deprecation")
+	public static void main(String[] args)
+	{
+		PlayList playList = new PlayList();
+		playList.setFiles("001001_1.rmvb_30,002002_2.rmvb_20,003003_3.rmvb_10");
+		playList.setClientIds("01,02,03");
+		playList.setStartDate(new java.util.Date().toLocaleString());
+		playList.setEndDate(java.sql.Date.valueOf("2009-1-2").toLocaleString());
+		
+		PlayListMsg plm = new PlayListMsg();
+//		String ss = plm.createDocument(playList);
+		String ss = plm.createDocument("001001_1.rmvb_30,002002_2.rmvb_20,003003_3.rmvb_10", new java.util.Date().toLocaleString(), java.sql.Date.valueOf("2009-1-2").toLocaleString(), "01,02,03");
+		System.out.println(ss);
+		Object[]res = plm.parseXML(ss);
+		if(res[0] instanceof PlayList)
+		{
+			PlayList pl = (PlayList)res[0];
+			System.out.println(pl.getFiles());
+			System.out.println(pl.getClientIds());
+			System.out.println(pl.getStartDate());
+			System.out.println(pl.getEndDate());
+		}
+
+	}
+	
+	/**
+	 * 解析排期单消息
+	 * @param xml ：排期单消息
+	 * @return 返回排期单对象
+	 */
+	public Object[] parseXML(String xml)
+	{
+		PlayList playList = new PlayList();
+		
+		//解析消息
+		Document doc=null;
+		try
+		{
+			doc = DocumentHelper.parseText(xml);
+		} catch (DocumentException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Element root = doc.getRootElement(); 
+		Element files = root.element("Files");
+		playList.setFiles(files.elementText("file"));
+		playList.setStartDate(files.elementText("startDate"));
+		playList.setEndDate(files.elementText("endDate"));
+		playList.setClientIds(root.element("clients").elementText("id"));
+		
+		//设置返回值数组
+		result[0] = playList;
+		
+		return result;
+	}
+	/**
+	 * 生成排期单的方法
+	 * @param playList ： 排期单对象
+	 * @return ：生成的排期单消息
+	 */
+	public String createDocument(PlayList playList)
+	{
+		String message = "";
+		
+		//添加元素
+		Document document = DocumentHelper.createDocument();
+		Element root = document.addElement("Name");
+		root.addAttribute("msgname","PlayList");
+		Element files = root.addElement("Files");
+		Element file = files.addElement("file");
+		file.addText(playList.getFiles());
+		Element startDate = files.addElement("startDate");
+		startDate.addText(playList.getStartDate());
+		Element endDate = files.addElement("endDate");
+		endDate.addText(playList.getEndDate());
+		Element clients = root.addElement("clients");
+		Element id = clients.addElement("id");
+		id.addText(playList.getClientIds());
+		
+		//将Document对象转换成xml格式字符串
+		message = document.asXML();
+		
+		return message;
+	}
+	/**
+	 * 生成排期单
+	 * @param fileNames ：排期单中的文件名字符串
+	 * @param sDate : 开始时间字符串
+	 * @param eDate : 结束时间字符串
+	 * @param ids ： 接收排期单的终端id 的字符串
+	 * @return 排期单消息
+	 */
+	public String createDocument(String fileNames,String sDate,String eDate,String ids)
+	{
+		String message = "";
+		
+		//添加元素
+		Document document = DocumentHelper.createDocument();
+		Element root = document.addElement("Name");
+		root.addAttribute("msgname","PlayList");
+		Element files = root.addElement("Files");
+		Element file = files.addElement("file");
+		file.addText(fileNames);
+		Element startDate = files.addElement("startDate");
+		startDate.addText(sDate);
+		Element endDate = files.addElement("endDate");
+		endDate.addText(eDate);
+		Element clients = root.addElement("clients");
+		Element id = clients.addElement("id");
+		id.addText(ids);
+		
+		//将Document对象转换成xml格式字符串
+		message = document.asXML();
+		
+		return message;
+	}
+}

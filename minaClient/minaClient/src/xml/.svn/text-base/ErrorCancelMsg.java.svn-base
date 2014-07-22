@@ -1,0 +1,98 @@
+package com.hotct.xml;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+
+import com.hotct.model.TerminalError;
+
+/**
+ * 此类是对告警清除消息的操作，
+ * 方法parseXML ：解析告警清除消息，返回终端 id 和 取消告警设备
+ * 方法createDocument : 生成告警消息
+ * @author liujh
+ *
+ */
+public class ErrorCancelMsg
+{
+	/**
+	 * 返回结果的数组，共两个:
+	 * result［0］：消息中的终端ID
+	 * result［1］：发生消息的终端设备对象
+	 */
+	private Object[] result = new Object[2];
+	
+	@SuppressWarnings("static-access")
+	public static void main(String[] args)
+	{
+		TerminalError err = new TerminalError();
+		err.setName("printer");
+		ErrorCancelMsg ecm = new ErrorCancelMsg();
+		String ss = ecm.createDocument("clinet-100001",err);
+		System.out.println(ss);
+		System.out.println("------------------------------------------------");
+		ecm.parseXML(ss);
+
+	}
+	/**
+	 * 解析xml字符串
+	 * @param xml ：待解析消息
+	 * @return 返回结果数组
+	 */
+	public Object[] parseXML(String xml)
+	{	 
+		TerminalError error = new TerminalError();
+		Document doc=null;
+		try
+		{
+			doc = DocumentHelper.parseText(xml);
+		} catch (DocumentException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Element root = doc.getRootElement(); 
+		String clientId = root.elementText("clientId");
+		error.setName(root.element("error").elementText("name"));
+		
+		result[0] = clientId;
+		result[1] = error;
+		
+		return result;
+	}
+	/**
+	 * 生成消息
+	 * @param er ：取消告警的设备
+	 * @param clientId  ：取消告警的终端
+	 * @return
+	 */
+	public static String createDocument(String clientId,TerminalError er)
+	{
+		String rst = "";
+		Document document = DocumentHelper.createDocument();
+		Element root = document.addElement("Name");
+		root.addAttribute("msgname","ErrorCancel");
+		Element client = root.addElement("clientId");
+		
+		client.addText(clientId);
+		
+			Element error = root.addElement("error");
+			Element errorName = error.addElement("name");
+			errorName.addText(er.getName());
+		 rst = document.asXML();
+		return rst;
+	}
+
+	public Object[] getResult()
+	{
+		return result;
+	}
+
+	public void setResult(Object[] result)
+	{
+		this.result = result;
+	}
+
+}

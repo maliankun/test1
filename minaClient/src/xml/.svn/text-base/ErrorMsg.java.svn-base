@@ -1,0 +1,105 @@
+package com.hotct.xml;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
+
+import com.hotct.model.TerminalError;
+
+/**
+ * 此程序用于处理告警消息
+ * 方法parseXML : 解析消息
+ * 方法createDocument : 生成消息
+ * @author liujh
+ *
+ */
+public class ErrorMsg
+{
+	/**
+	 * 返回结果的数组，共两个:
+	 * result［0］：消息中的终端ID
+	 * result［1］：发生消息的所有终端设备对象
+	 */
+	private Object[] result = new Object[2];  
+	
+	public static void main(String[] args)
+	{
+		
+	}
+	/**
+	 * 解析xml字符串，分解出clientId和errorList
+	 * @param xml : 消息字符串
+	 */
+	public Object[] parseXML(String xml)
+	{	 
+		Document doc=null;
+		try
+		{
+			doc = DocumentHelper.parseText(xml);
+		} catch (DocumentException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		List<TerminalError> errorList = new ArrayList<TerminalError>();
+		Element root = doc.getRootElement(); 
+		
+		String clientId=root.element("client").elementText("id");
+		
+		Iterator iter = root.element("errors").elementIterator("error"); 
+		while(iter.hasNext())
+		{
+			TerminalError error = new TerminalError();
+			Element element = (Element)iter.next();
+			error.setName(element.elementText("name"));
+			error.setErrorInfo(element.elementText("errorInfo"));
+			error.setDate(element.elementText("date"));
+			errorList.add(error);
+		}
+		result[0] = clientId;
+		result[1] = errorList;
+		return result;
+		
+	}
+	/**
+	 * 根据终端id和错误列表生成xml格式字符串
+	 * @param errorList
+	 * @param clientId
+	 * @return xml格式字符串�
+	 */
+	public static String createDocument(String clientId,List<TerminalError> errorList)
+	{
+		String rst = "";
+		Document xmlfile=DocumentHelper.createDocument();
+		Element root = xmlfile.addElement("Name");
+		root.addAttribute("msgname","Error");
+		Element client = root.addElement("client");
+		Element id = client.addElement("id");
+		id.addText(clientId);
+		Element errors = root.addElement("errors");
+		for(TerminalError e : errorList)
+		{
+			Element error = errors.addElement("error");
+			Element errorName = error.addElement("name");
+			Element errorInfo = error.addElement("errorInfo");
+			Element errorDate = error.addElement("date");
+			errorName.addText(e.getName());
+			errorInfo.addText(e.getErrorInfo());
+			errorDate.addText(e.getDate());
+		}
+		 rst = xmlfile.asXML();
+		return rst;
+	}
+	public Object[] getResult()
+	{
+		return result;
+	}
+	public void setResult(Object[] result)
+	{
+		this.result = result;
+	}
+}
